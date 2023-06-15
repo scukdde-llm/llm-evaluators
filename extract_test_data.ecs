@@ -1,0 +1,26 @@
+import codec.json
+function random_extract(data, size)
+    var new_data = new array
+    var blck_size = (data.size / size) => integer
+    foreach i in range(0, data.size, blck_size)
+        if i + blck_size > data.size
+            break
+        end
+        var rec = null
+        loop
+            rec = data.at(math.randint(i, i + blck_size))
+        until rec.input.empty()
+        rec.erase("input")
+        new_data.push_back(rec)
+    end
+    return move(new_data)
+end
+var alpaca_data = json.to_var(json.from_stream(iostream.ifstream("./datasets/alpaca_data_cleaned.json")))
+var crimekg_data = json.to_var(json.from_stream(iostream.ifstream("./datasets/CrimeKgAssitantAlpaca_52k.json")))
+var size = context.cmd_args[1] => integer
+var en_data = random_extract(alpaca_data, size)
+var zh_data = random_extract(crimekg_data, size)
+json.from_var({
+    "en" : en_data,
+    "zh": zh_data
+} => hash_map).to_stream(iostream.ofstream("./datasets/test_data_" + size + ".json"))
