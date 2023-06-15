@@ -23,4 +23,4 @@ var zh_data = random_extract(crimekg_data, size)
 json.from_var({
     "en" : en_data,
     "zh": zh_data
-} => hash_map).to_stream(iostream.ofstream("./datasets/test_data_" + size + ".json"))
+} => hash_map).to_stream(iostream.ofstream(context.cmd_args[2]))

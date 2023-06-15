@@ -1,0 +1,17 @@
+import codec.json
+import analysis
+link args = context.cmd_args
+var df = new analysis.dataframe{{"Language", "Model", "Metric", "Score"}}
+foreach i in range(2, args.size)
+    var scores = json.to_var(json.from_stream(iostream.ifstream(args[i] + system.path.separator + "rating_output.json"))).scores
+    df.data.push_back({"English", args[i], "Precision", scores.en.P})
+    df.data.push_back({"English", args[i], "Recall", scores.en.R})
+    df.data.push_back({"English", args[i], "F1", scores.en.F1})
+    df.data.push_back({"Chinese", args[i], "Precision", scores.zh.P})
+    df.data.push_back({"Chinese", args[i], "Recall", scores.zh.R})
+    df.data.push_back({"Chinese", args[i], "F1", scores.zh.F1})
+    df.data.push_back({"All", args[i], "Precision", scores.all.P})
+    df.data.push_back({"All", args[i], "Recall", scores.all.R})
+    df.data.push_back({"All", args[i], "F1", scores.all.F1})
+end
+df.to_csv(args[1])
