@@ -1,21 +1,23 @@
 import sys
 import json
 import torch
-from peft import PeftModel
-import transformers
-import gradio as gr
 import argparse
+import transformers
+from peft import PeftModel
 from transformers import (
     LlamaForCausalLM, LlamaTokenizer, 
     AutoModel, AutoTokenizer,
     BloomForCausalLM, BloomTokenizerFast)
 
-parser = argparse.ArgumentParser(description='Process some integers.')
+parser = argparse.ArgumentParser()
 parser.add_argument('--no_lora', type=bool, default=False)
 parser.add_argument('--load_8bit', type=bool, default=False)
 parser.add_argument('--base_model', type=str)
-parser.add_argument('--lora_weights', type=bool)
+parser.add_argument('--lora_weights', type=str)
 parser.add_argument('--model_type', default="llama", choices=['llama', 'chatglm', 'bloom'])
+parser.add_argument('--input', type=str, default="./test_data.json")
+parser.add_argument('--output', type=str, default="./eval_output.json")
+parser.add_argument('--device', type=str, default="cuda:0")
 args = parser.parse_args()
 
 assert (
@@ -50,18 +52,19 @@ except:
 
 if device == "cuda":
     if args.model_type == "llama":
-        device="cuda:1"
+        device=args.device
         model = LlamaForCausalLM.from_pretrained(
             BASE_MODEL,
             load_in_8bit=LOAD_8BIT,
             torch_dtype=torch.float16,
-            device_map="cuda:1",
+            device_map=args.device,
         )
         if not NO_LORA:
             model = PeftModel.from_pretrained(
                 model,
                 LORA_WEIGHTS,
                 torch_dtype=torch.float16,
+                device_map=args.device,
             )
     elif args.model_type == "bloom":
         model = BloomForCausalLM.from_pretrained(
@@ -189,7 +192,6 @@ model.eval()
 if torch.__version__ >= "2" and sys.platform != "win32":
     model = torch.compile(model)
 
-
 def evaluate(
     instruction,
     input=None,
@@ -225,37 +227,8 @@ def evaluate(
     output = tokenizer.decode(s)
     return output.split("### Response:")[1].strip()
 
-"""
-gr.Interface(
-    fn=evaluate,
-    inputs=[
-        gr.components.Textbox(
-            lines=2, label="Instruction", placeholder="Tell me about alpacas."
-        ),
-        gr.components.Textbox(lines=2, label="Input", placeholder="none"),
-        gr.components.Slider(minimum=0, maximum=1, value=0.1, label="Temperature"),
-        gr.components.Slider(minimum=0, maximum=1, value=0.75, label="Top p"),
-        gr.components.Slider(minimum=0, maximum=100, step=1, value=40, label="Top k"),
-        gr.components.Slider(minimum=1, maximum=4, step=1, value=4, label="Beams"),
-        gr.components.Slider(
-            minimum=1, maximum=2000, step=1, value=128, label="Max tokens"
-        ),
-    ],
-    outputs=[
-        gr.inputs.Textbox(
-            lines=5,
-            label="Output",
-        )
-    ],
-    title="alpaca4",
-    description="Alpaca4",
-).launch()
-
-# Old testing code follows.
-
-"""
 if __name__ == "__main__":
-    with open("./test_data.json", "r", encoding="utf-8") as f:
+    with open(args.input, "r", encoding="utf-8") as f:
         test_data = json.load(f)
     for data in test_data["en"]:
         response = evaluate(data["instruction"])
@@ -269,4 +242,4 @@ if __name__ == "__main__":
             response = response[:-4]
         data["output_gpt"] = response
         print({"question":data["instruction"], "answer": response})
-    open("./eval_output.json", "w+").write(json.dumps(test_data, ensure_ascii=False))
+    open(args.output, "w+").write(json.dumps(test_data, ensure_ascii=False))

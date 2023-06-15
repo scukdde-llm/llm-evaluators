@@ -1,7 +1,13 @@
 import bert_score
+import argparse
 import json
 
-with open("./eval_output.json", "r", encoding="utf-8") as f:
+parser = argparse.ArgumentParser()
+parser.add_argument('--input', type=str, default="./eval_output.json")
+parser.add_argument('--output', type=str, default="./score_output.json")
+args = parser.parse_args()
+
+with open(args.input, "r", encoding="utf-8") as f:
     test_data = json.load(f)
 
 test_data["scores"] = dict()
@@ -70,4 +76,4 @@ test_data["scores"]["all"]["R"] = avg_r
 test_data["scores"]["all"]["F1"] = avg_f1
 
 print(f"Average: Precision = {avg_p}, Recall = {avg_r}, F1 = {avg_f1}")
-open("./score_output.json", "w+").write(json.dumps(test_data, ensure_ascii=False))
+open(args.output, "w+").write(json.dumps(test_data, ensure_ascii=False))
