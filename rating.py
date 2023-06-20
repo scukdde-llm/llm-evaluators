@@ -14,8 +14,8 @@ test_data["scores"] = dict()
 test_data["scores"]["en"] = dict()
 test_data["scores"]["zh"] = dict()
 test_data["scores"]["all"] = dict()
-en_scorer = bert_score.BERTScorer(lang="en", batch_size=3)
-zh_scorer = bert_score.BERTScorer(lang="zh", batch_size=3)
+en_scorer = bert_score.BERTScorer(lang="en")
+zh_scorer = bert_score.BERTScorer(lang="zh")
 
 en_sum_p = 0
 en_sum_r = 0
